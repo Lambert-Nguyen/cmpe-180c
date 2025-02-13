@@ -1,0 +1,6 @@
+./main 1 > ./OUT.txt 2>./ERR.txt
+ls -al ERR.txt OUT.txt
+stat 
+strerror
+errno
+getopt
