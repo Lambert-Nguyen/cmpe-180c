@@ -10,14 +10,58 @@ int extract_value(char *arg){
     return (*arg) ? atoi(arg) : -1; 
 }
 
+int is_duplicate(int *arr, int size, int num) {
+    for (int i = 0; i < size; i++) {
+        if (arr[i] == num) {return 1;}
+    }
+    return 0;
+}
+
+// Function to generate and print lottery numbers
+void generate_lottery_numbers(int num_count, int max_num, int max_powerball, int sets){
+    int numbers[num_count];  
+    int powerball;
+    
+    for(int s = 0; s < sets; s++) {
+
+        for(int i = 0; i < num_count; i++){
+            int num;
+            do {num = (rand() % max_num) + 1;} 
+            while (is_duplicate(numbers, i, num));
+            numbers[i] = num;
+        }
+        for(int i = 0; i < num_count - 1; i++){
+            for (int j = i + 1; j < num_count; j++) {
+                if(numbers[i] > numbers[j]){
+                    int temp = numbers[i];
+                    numbers[i] = numbers[j];
+                    numbers[j] = temp;
+                }
+            }
+        }
+        for(int i = 0; i < num_count; i++){
+            fprintf(stdout,"%d ", numbers[i]);
+        }
+
+        if (max_powerball > 0) {
+            powerball = (rand() % max_powerball) + 1;
+            fprintf(stdout,"%d", powerball);
+        }
+        fprintf(stdout,"\n");
+    }
+}
+
 int main(int argc, char *argv[]){
-    printf("argc = %d\n", argc);
-    printf("argv[0] - %s\n", argv[0]);
+    // printf("argc = %d\n", argc);
+    // printf("argv[0] - %s\n", argv[0]);
     if (argc != 7 && argc != 9) {
-        fprintf(stderr, "Usage:\n");
+        fprintf(stderr, "ERROR: Usage: -r, -n, -N are mandatory, and -p is optional:\n");
+        fprintf(stderr, "Format should be in pairs (flag, number) SEPERATED by SPACE: \n");
         fprintf(stderr, "  3 pairs: %s -r MaxNum -n NumGen -N NumSets\n", argv[0]);
         fprintf(stderr, "  4 pairs: %s -r MaxNum -n NumGen -p PowerBall -N NumSets\n", argv[0]);
-        fprintf(stderr, "OR number/flag style (but not mixed)\n");
+        fprintf(stderr, "OR (number, flag) format style (but not mixed)\n");
+        fprintf(stderr, "  3 pairs: %s MaxNum -r NumGen -n NumSets -N \n", argv[0]);
+        fprintf(stderr, "  4 pairs: %s MaxNum -r NumGen -n PowerBall -p NumSets -N \n", argv[0]);
         return 1;
     }
 
@@ -47,7 +91,7 @@ int main(int argc, char *argv[]){
 
         if(mode == 0){
             if(!is_arg1_flag || is_arg2_flag){
-                fprintf(stderr, "Error: Mixed format detected in pair '%s' '%s'. All pairs must match the first pair's style.\n", arg1, arg2);
+                fprintf(stderr,"Error: Mixed format detected in pair '%s' '%s'. All pairs must match the first pair's style.\n", arg1, arg2);
                 return 1;
             }
             char flag = arg1[1];
@@ -116,64 +160,19 @@ int main(int argc, char *argv[]){
         }
     }
 
-
-
-
-
-    //     if (argv[i][0] == '-'){
-    //         switch (argv[i][1])
-    //         {
-    //         case 'n':
-    //             if(flag_n) {fprintf(stderr, "Error: Duplicate -n flag detected!\n"); return 1;}
-    //             flag_n = true;
-    //             num_count = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : ((i + 1 < argc) && (argv[i+1][0] != '-')) ? atoi(argv[++i]) : -1;
-    //             printf("num_count = %d\n", num_count);
-    //             if (num_count == -1) {fprintf(stderr, "Error: Missing VALUE for -n\n"); return 1;}
-    //             break;
-    //         case 'r':
-    //             if(flag_r) {fprintf(stderr, "Error: Duplicate -r flag detected!\n"); return 1;}
-    //             flag_r = true;
-    //             max_num = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i+1][0] != '-') ? atoi(argv[++i]) : -1;
-    //             if (max_num == -1) {fprintf(stderr, "Error: Missing VALUE for -r\n"); return 1;}
-    //             break;
-    //         case 'p':
-    //             if(flag_p) {fprintf(stderr, "Error: Duplicate -p flag detected!\n"); return 1;}
-    //             flag_p = true;
-    //             max_powerball = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i+1][0] != '-') ? atoi(argv[++i]) : -1;
-    //             if (max_powerball == -1) {fprintf(stderr, "Error: Missing VALUE for -p\n"); return 1;}
-    //             break;
-    //         case 'N':
-    //             if(flag_N) {fprintf(stderr, "Error: Duplicate -N flag detected!\n"); return 1;}
-    //             flag_N = true;
-    //             num_sets = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i+1][0] != '-') ? atoi(argv[++i]) : -1;
-    //             if (num_sets == -1) {fprintf(stderr, "Error: Missing VALUE for -N\n"); return 1;}
-    //             break;
-                        
-    //         default:
-    //         fprintf(stderr,"Error: Unrecognized flag: %s\n",argv[i]);
-    //             return 1;
-    //         }
-    //     }
-    //     else {
-    //         fprintf(stderr,"Error: Unexpected Argument: %s\n",argv[i]);
-    //         return 1;
-    //     }
-    // }
-
     if (!flag_r || !flag_n || !flag_N) {
-        fprintf(stderr, "Error: Missing required flags: -r, -n, or -N.\n");
+        fprintf(stderr,"Error: Missing required flags: -r, -n, or -N.\n");
         return 1;
     }
     if (max_num <= 0 || num_count <= 0 || num_sets <= 0) {
-        fprintf(stderr, "Error: Invalid or missing values for -r, -n, or -N.\n");
+        fprintf(stderr,"Error: Invalid or missing values for -r, -n, or -N.\n");
         return 1;
     }
     if (num_count > max_num) {
-        fprintf(stderr, "Error: The numbers to be generated (-n %d) cannot exceed the maximum (-r %d).\n", num_count, max_num);
+        fprintf(stderr,"Error: The numbers to be generated (-n %d) cannot exceed the maximum (-r %d).\n", num_count, max_num);
         return 1;
     }
 
-    // If we get here, everything is good
     printf("Parsed values:\n");
     printf("  -r (max_num)       = %d\n", max_num);
     printf("  -n (num_count)     = %d\n", num_count);
@@ -181,6 +180,11 @@ int main(int argc, char *argv[]){
     printf("  -N (num_sets)      = %d\n", num_sets);
 
     fprintf(stdout,"Parsed values: -n %d, -r %d, -p %d, -N %d\n", num_count, max_num, max_powerball, num_sets);
+
+
+    srand(time(NULL));
+
+    generate_lottery_numbers(num_count, max_num, max_powerball, num_sets);
 
     return 0;
 }
