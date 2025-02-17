@@ -1,6 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <stdio.h>   
+#include <stdlib.h>  
+#include <time.h>    /*For time() */ 
+#include <string.h>  /*For strcmp() */ 
+#include <ctype.h>   /*For isdigit() (*/ 
+
+int extract_value(char *arg){
+    while (*arg && !isdigit(*arg)) arg++;  
+    return (*arg) ? atoi(arg) : -1; 
+}
 
 int main(int argc, char *argv[]){
     printf("argc = %d\n", argc);
@@ -16,7 +23,7 @@ int main(int argc, char *argv[]){
     int num_sets = -1;
     bool flag_n = false, flag_r = false, flag_p = false, flag_N = false;
 
-    for (int i = 0; i < argc; i++){
+    for (int i = 1; i < argc; i++){
         if (argv[i][0] == '-'){
             switch (argv[i][1])
             {
@@ -43,7 +50,7 @@ int main(int argc, char *argv[]){
             
             
             default:
-                printf("case default\n");
+            fprintf(stderr,"Error: Unrecognized Argument: %s\n",argv[i]);
                 return 1;
             }
         }
@@ -63,6 +70,8 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Error: The numbers to be generated (-n %d) cant not be larger than the maximum number rage (-r %d)\n", num_count, max_num);
         return 1;
     }
+
+    fprintf(stdout,"Parsed values: -n %d, -r %d, -p %d, -N %d\n", num_count, max_num, max_powerball, num_sets);
 
     return 0;
 }
