@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include 
+#include <stdbool.h>
 
 int main(int argc, char *argv[]){
     printf("argc = %d\n", argc);
@@ -14,21 +14,30 @@ int main(int argc, char *argv[]){
     int max_num = -1;
     int max_powerball =0;
     int num_sets = -1;
+    bool flag_n = false, flag_r = false, flag_p = false, flag_N = false;
 
     for (int i = 0; i < argc; i++){
         if (argv[i][0] == '-'){
             switch (argv[i][1])
             {
             case 'n':
+                if(flag_n) {fprintf(stderr, "Error: Duplicate -n flag detected!\n"); return 1;}
+                flag_n = true;
                 printf("case 'n'\n");
                 break;
             case 'r':
+                if(flag_r) {fprintf(stderr, "Error: Duplicate -r flag detected!\n"); return 1;}
+                flag_r = true;
                 printf("case 'r'\n");
                 break;
             case 'p':
+                if(flag_p) {fprintf(stderr, "Error: Duplicate -p flag detected!\n"); return 1;}
+                flag_p = true;
                 printf("case 'p'\n");
                 break;
             case 'N':
+                if(flag_N) {fprintf(stderr, "Error: Duplicate -N flag detected!\n"); return 1;}
+                flag_N = true;
                 printf("case N\n");
                 break;
             
@@ -44,7 +53,7 @@ int main(int argc, char *argv[]){
         }
     }
 
-    if(num_count <= 0 || max_num =< 0 || num_sets <= 0){
+    if(num_count <= 0 || max_num <= 0 || num_sets <= 0){
         fprintf(stderr, "Error: Invalid Input. -n, -r or -N value are not properly set.\n");
         return 1;
 
