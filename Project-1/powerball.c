@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include 
 
 int main(int argc, char *argv[]){
     printf("argc = %d\n", argc);
@@ -33,9 +35,24 @@ int main(int argc, char *argv[]){
             
             default:
                 printf("case default\n");
-                break;
+                return 1;
             }
         }
+        else {
+            fprintf(stderr,"Error: Unexpected Argument: %s\n",argv[i]);
+            return 1;
+        }
+    }
+
+    if(num_count <= 0 || max_num =< 0 || num_sets <= 0){
+        fprintf(stderr, "Error: Invalid Input. -n, -r or -N value are not properly set.\n");
+        return 1;
+
+    }
+
+    if(max_num < num_count){
+        fprintf(stderr, "Error: The numbers to be generated (-n %d) cant not be larger than the maximum number rage (-r %d)\n", num_count, max_num);
+        return 1;
     }
 
     return 0;
