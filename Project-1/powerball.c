@@ -31,26 +31,29 @@ int main(int argc, char *argv[]){
             case 'n':
                 if(flag_n) {fprintf(stderr, "Error: Duplicate -n flag detected!\n"); return 1;}
                 flag_n = true;
-
+                num_count = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : ((i + 1 < argc) && (argv[i+1][0] != '-')) ? atoi(argv[++i]) : -1;
+                printf("num_count = %d\n", num_count);
                 if (num_count == -1) {fprintf(stderr, "Error: Missing VALUE for -n\n"); return 1;}
                 break;
             case 'r':
                 if(flag_r) {fprintf(stderr, "Error: Duplicate -r flag detected!\n"); return 1;}
                 flag_r = true;
+                max_num = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i + 1][0] != '-') ? atoi(argv[++i]) : -1;
                 if (max_num == -1) {fprintf(stderr, "Error: Missing VALUE for -r\n"); return 1;}
                 break;
             case 'p':
                 if(flag_p) {fprintf(stderr, "Error: Duplicate -p flag detected!\n"); return 1;}
                 flag_p = true;
+                max_powerball = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i + 1][0] != '-') ? atoi(argv[++i]) : -1;
                 if (max_powerball == -1) {fprintf(stderr, "Error: Missing VALUE for -p\n"); return 1;}
                 break;
             case 'N':
                 if(flag_N) {fprintf(stderr, "Error: Duplicate -N flag detected!\n"); return 1;}
                 flag_N = true;
+                num_sets = (strlen(argv[i]) > 2) ? extract_value(argv[i]) : (i + 1 < argc && argv[i + 1][0] != '-') ? atoi(argv[++i]) : -1;
                 if (num_sets == -1) {fprintf(stderr, "Error: Missing VALUE for -N\n"); return 1;}
                 break;
-            
-            
+                        
             default:
             fprintf(stderr,"Error: Unrecognized flag: %s\n",argv[i]);
                 return 1;
