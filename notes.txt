@@ -4,3 +4,7 @@ stat
 strerror
 errno
 getopt
+
+
+sudo find / -name "*.ko"|grep tls
+sudo insmod /usr/lib/modules/***/net/tls/***
