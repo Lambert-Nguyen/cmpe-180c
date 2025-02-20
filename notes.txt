@@ -5,6 +5,6 @@ strerror
 errno
 getopt
 
-
+lsmod | grep tls
 sudo find / -name "*.ko"|grep tls
 sudo insmod /usr/lib/modules/***/net/tls/***
