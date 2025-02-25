@@ -15,7 +15,7 @@ Hint: make sure that the child handles SIGINT signal. Make sure that the exit co
 #include <string.h>
 
 void sigint_handler(int sig) {
-    fprintf(stdout, "DO SOMETHING\n");
+    // fprintf(stdout, "DO SOMETHING\n");
 
 }
 
@@ -38,7 +38,6 @@ int main() {
         pause();
         exit(5);
     } 
-    
     else {
         if (signal(SIGINT, SIG_IGN) == SIG_ERR){
             fprintf(stderr, "Error: signal() failed in parent - %s\n", strerror(errno));
@@ -52,8 +51,6 @@ int main() {
 
         // Restore default SIGINT behavior
         signal(SIGINT, SIG_DFL);
-
-        // Check if the child exited normally
         if (WIFEXITED(status)) {
             fprintf(stdout, "childpid=%d,exitstatus=%d\n", pid, WEXITSTATUS(status));
         }
