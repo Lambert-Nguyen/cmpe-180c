@@ -12,3 +12,20 @@ sudo insmod /usr/lib/modules/***/net/tls/***
 ls /proc/
 cat /proc/
 car /proc/cpuinfo
+
+-----------------------------------------------------------
+03/05/2025: 
+Types of threads:
+1.Kernel threads
+2. User level threads
+--> Scheduler activations
+
+THREAD PROGRAMMING API
+process handlings:
+fork(), exec() ---->
+kill -->
+wait -->
+exit() -->
+
+memory layout for threads:
+
