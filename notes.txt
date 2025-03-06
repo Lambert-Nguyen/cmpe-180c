@@ -21,11 +21,12 @@ Types of threads:
 --> Scheduler activations
 
 THREAD PROGRAMMING API
-process handlings:
-fork(), exec() ---->
-kill -->
-wait -->
-exit() -->
+process handlings to threads handling:
+pthread_att
+fork(), exec() ----> pthread_create(*function, arg passed to be executed)
+kill --> 
+wait --> pthread_join(&r)
+exit() --> pthread_exit(r)
 
 memory layout for threads:
 
@@ -48,4 +49,7 @@ memory layout for threads:
 
 
 mmap()
+
+
+amdhal's law
 
