@@ -1,0 +1,13 @@
+bool test_and_set(bool *L)
+
+--> instruction CPU atomically
+
+lock l -> lock()
+       -> unlock()
+
+semaphore 
+
+sem s = n;
+wait(s);
+signal(s);
+        
