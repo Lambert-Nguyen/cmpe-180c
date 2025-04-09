@@ -1,98 +1,105 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #define MSG_SIZE 100
 
-int main(void) {
-    int pipe1[2]; // for parent -> child communication
-    int pipe2[2]; // for child -> parent communication
+int main(void){
+    int pipe1[2]; // Parent-to-child communication
+    int pipe2[2]; // Child-to-parent communication
+    pid_t pid;
+    char buffer[MSG_SIZE];
 
-    // Create the two pipes.
+    /* Create the first pipe (parent -> child) */
     if (pipe(pipe1) == -1) {
-        perror("pipe1");
+        fprintf(stderr, "Error: pipe1 creation failed: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
+
+    /* Create the second pipe (child -> parent) */
     if (pipe(pipe2) == -1) {
-        perror("pipe2");
+        fprintf(stderr, "Error: pipe2 creation failed: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    pid_t pid = fork();
+    /* Fork to create child process */
+    pid = fork();
     if (pid < 0) {
-        perror("fork");
+        fprintf(stderr, "Error: fork failed: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
-    else if (pid == 0) {  // Child process
-        // Close unused ends.
-        close(pipe1[1]); // Close write end of pipe1 (parent->child)
-        close(pipe2[0]); // Close read end of pipe2 (child->parent)
 
-        char buffer[MSG_SIZE];
+    if (pid > 0) {
+        /***** Parent Process *****/
+        /* 
+         * Close unused ends:
+         * For pipe1, the parent only writes, so close the read end.
+         * For pipe2, the parent only reads, so close the write end.
+         */
+        close(pipe1[0]); 
+        close(pipe2[1]);
 
-        // Read message from parent.
-        ssize_t bytesRead = read(pipe1[0], buffer, MSG_SIZE - 1);
-        if (bytesRead < 0) {
-            perror("child read");
-            exit(EXIT_FAILURE);
-        }
-        buffer[bytesRead] = '\0';
-        // Print parent's message to stdout.
-        printf("Child received: %s", buffer);
+        /* Prepare a message with parent's PID */
+        snprintf(buffer, MSG_SIZE, "I am your daddy! and my name is %d\n", getpid());
 
-        // Prepare reply: "Daddy, my name is <child pid>"
-        char reply[MSG_SIZE];
-        snprintf(reply, MSG_SIZE, "Daddy, my name is %d\n", getpid());
-
-        // Write reply to parent.
-        if (write(pipe2[1], reply, strlen(reply)) < 0) {
-            perror("child write");
+        /* Write the message into pipe1 for the child */
+        if (write(pipe1[1], buffer, strlen(buffer) + 1) == -1) {
+            fprintf(stderr, "Error: write to pipe1 failed: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
 
-        // Close the remaining file descriptors.
+        /* Optionally, the parent could block while waiting for the child’s message */
+        if (read(pipe2[0], buffer, MSG_SIZE) == -1) {
+            fprintf(stderr, "Error: read from pipe2 failed: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        /* Print the message received from the child to stdout */
+        printf("Parent received: %s\n", buffer);
+
+        /* Close the remaining pipe ends */
+        close(pipe1[1]);
+        close(pipe2[0]);
+
+        /* Wait for child to exit to avoid creating a zombie process */
+        wait(NULL);
+    } else {
+        /***** Child Process *****/
+        /* 
+         * Close unused ends:
+         * For pipe1, the child reads the message so it closes the write end.
+         * For pipe2, the child writes its message so it closes the read end.
+         */
+        close(pipe1[1]);
+        close(pipe2[0]);
+
+        /* Read the message sent by the parent from pipe1 */
+        if (read(pipe1[0], buffer, MSG_SIZE) == -1) {
+            fprintf(stderr, "Error: read from pipe1 failed: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        /* Print the message to stdout */
+        printf("Child received: %s\n", buffer);
+
+        /* Prepare the message with child’s PID */
+        snprintf(buffer, MSG_SIZE, "Daddy, my name is %d", getpid());
+
+        /* Write the message into pipe2 for the parent */
+        if (write(pipe2[1], buffer, strlen(buffer) + 1) == -1) {
+            fprintf(stderr, "Error: write to pipe2 failed: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        /* Close the remaining pipe ends */
         close(pipe1[0]);
         close(pipe2[1]);
 
         exit(EXIT_SUCCESS);
     }
-    else {  // Parent process
-        // Close unused ends.
-        close(pipe1[0]); // Close read end of pipe1 (parent->child)
-        close(pipe2[1]); // Close write end of pipe2 (child->parent)
 
-        // Prepare message: "I am your daddy! and my name is <parent pid>\n"
-        char message[MSG_SIZE];
-        snprintf(message, MSG_SIZE, "I am your daddy! and my name is %d\n", getpid());
-
-        // Write the message to the child.
-        if (write(pipe1[1], message, strlen(message)) < 0) {
-            perror("parent write");
-            exit(EXIT_FAILURE);
-        }
-
-        // Close write end after sending.
-        close(pipe1[1]);
-
-        // Block on reading child's reply.
-        char reply[MSG_SIZE];
-        ssize_t bytesRead = read(pipe2[0], reply, MSG_SIZE - 1);
-        if (bytesRead < 0) {
-            perror("parent read");
-            exit(EXIT_FAILURE);
-        }
-        reply[bytesRead] = '\0';
-        // Print child's reply to stdout.
-        printf("Parent received: %s", reply);
-
-        // Close read end.
-        close(pipe2[0]);
-
-        // Wait for child to exit to avoid zombies.
-        wait(NULL);
-    }
     return 0;
 }
