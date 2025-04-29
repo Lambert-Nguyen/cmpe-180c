@@ -91,14 +91,14 @@ void parse_arguments(int argc, char *argv[]) {
 void producer_shared() {
     int shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1) {
-        perror("shm_open");
+        fprintf(stderr, "shm_open: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
     ftruncate(shm_fd, sizeof(shared_mem_t));
     shared_mem_t *shm_ptr = mmap(0, sizeof(shared_mem_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (shm_ptr == MAP_FAILED) {
-        perror("mmap");
+        fprintf(stderr, "mmap: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -107,7 +107,7 @@ void producer_shared() {
     sem_t *mutex = sem_open(SEM_MUTEX, O_CREAT, 0666, 1);
 
     if (empty == SEM_FAILED || full == SEM_FAILED || mutex == SEM_FAILED) {
-        perror("sem_open");
+        fprintf(stderr, "sem_open: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -118,7 +118,7 @@ void producer_shared() {
     shm_ptr->in = (shm_ptr->in + 1) % queue_depth;
 
     if (echo) {
-        printf("Produced: %s\n", message);
+        fprintf(stdout, "Produced: %s\n", message);
         fflush(stdout);
     }
 
@@ -144,13 +144,13 @@ void consumer_shared() {
             usleep(100000); // wait 100ms and retry
             continue;
         }
-        perror("shm_open"); // some other serious error
+        fprintf(stderr, "shm_open: %s\n", strerror(errno)); // some other serious error
         exit(EXIT_FAILURE);
     }
 
     shared_mem_t *shm_ptr = mmap(0, sizeof(shared_mem_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (shm_ptr == MAP_FAILED) {
-        perror("mmap");
+        fprintf(stderr, "mmap: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -159,7 +159,7 @@ void consumer_shared() {
     sem_t *mutex = sem_open(SEM_MUTEX, 0);
 
     if (empty == SEM_FAILED || full == SEM_FAILED || mutex == SEM_FAILED) {
-        perror("sem_open");
+        fprintf(stderr, "sem_open: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -167,7 +167,7 @@ void consumer_shared() {
     sem_wait(mutex);
 
     if (echo) {
-        printf("Consumed: %s\n", shm_ptr->buffer[shm_ptr->out]);
+        fprintf(stdout, "Consumed: %s\n", shm_ptr->buffer[shm_ptr->out]);
         fflush(stdout);
     }
     shm_ptr->out = (shm_ptr->out + 1) % queue_depth;
@@ -185,7 +185,7 @@ void consumer_shared() {
 void producer_socket() {
     int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server_fd == -1) {
-        perror("socket");
+        fprintf(stderr, "socket: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -197,33 +197,33 @@ void producer_socket() {
     unlink(SOCKET_PATH);
 
     if (bind(server_fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
-        perror("bind");
+        fprintf(stderr, "bind: %s\n", strerror(errno));
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     if (listen(server_fd, 5) == -1) {
-        perror("listen");
+        fprintf(stderr, "listen: %s\n", strerror(errno));
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     int client_fd = accept(server_fd, NULL, NULL);
     if (client_fd == -1) {
-        perror("accept");
+        fprintf(stderr, "accept: %s\n", strerror(errno));
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     if (write(client_fd, message, strlen(message) + 1) == -1) {
-        perror("write");
+        fprintf(stderr, "write: %s\n", strerror(errno));
         close(client_fd);
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     if (echo) {
-        printf("Produced (socket): %s\n", message);
+        fprintf(stdout, "Produced (socket): %s\n", message);
         fflush(stdout);
     }
 
@@ -235,7 +235,7 @@ void producer_socket() {
 void consumer_socket() {
     int client_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (client_fd == -1) {
-        perror("socket");
+        fprintf(stderr, "socket: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -249,7 +249,7 @@ void consumer_socket() {
             usleep(100000); // wait and retry
             continue;
         }
-        perror("connect");
+        fprintf(stderr, "connect: %s\n", strerror(errno));
         close(client_fd);
         exit(EXIT_FAILURE);
     }
@@ -258,11 +258,11 @@ void consumer_socket() {
     ssize_t num_read = read(client_fd, buf, sizeof(buf));
     if (num_read > 0) {
         if (echo) {
-            printf("Consumed (socket): %s\n", buf);
+            fprintf(stdout, "Consumed (socket): %s\n", buf);
             fflush(stdout);
         }
     } else {
-        perror("read");
+        fprintf(stderr, "read: %s\n", strerror(errno));
     }
 
     close(client_fd);
