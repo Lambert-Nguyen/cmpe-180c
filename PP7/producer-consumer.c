@@ -13,9 +13,11 @@
 #define SHM_NAME "/producer_consumer_shm"
 #define MAX_MSG_SIZE 1024
 
-// Shared memory structure
+// Shared memory structure (queue implementation)
 typedef struct {
-    char buffer[MAX_MSG_SIZE];
+    char buffer[128][MAX_MSG_SIZE];
+    int in;
+    int out;
 } shared_mem_t;
 
 // Global variables
@@ -112,7 +114,8 @@ void producer_shared() {
     sem_wait(empty);
     sem_wait(mutex);
 
-    strncpy(shm_ptr->buffer, message, MAX_MSG_SIZE);
+    strncpy(shm_ptr->buffer[shm_ptr->in], message, MAX_MSG_SIZE);
+    shm_ptr->in = (shm_ptr->in + 1) % queue_depth;
 
     if (echo) {
         printf("Produced: %s\n", message);
@@ -160,9 +163,10 @@ void consumer_shared() {
     sem_wait(mutex);
 
     if (echo) {
-        printf("Consumed: %s\n", shm_ptr->buffer);
+        printf("Consumed: %s\n", shm_ptr->buffer[shm_ptr->out]);
         fflush(stdout);
     }
+    shm_ptr->out = (shm_ptr->out + 1) % queue_depth;
 
     sem_post(mutex);
     sem_post(empty);
