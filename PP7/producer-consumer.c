@@ -130,17 +130,21 @@ void producer_shared() {
     sem_close(empty);
     sem_close(full);
     sem_close(mutex);
-
-    sem_unlink(SEM_EMPTY);
-    sem_unlink(SEM_FULL);
-    sem_unlink(SEM_MUTEX);
-    shm_unlink(SHM_NAME);
 }
 
 void consumer_shared() {
-    int shm_fd = shm_open(SHM_NAME, O_RDWR, 0666);
-    if (shm_fd == -1) {
-        perror("shm_open");
+    int shm_fd;
+    // Try opening shared memory, retry if not yet available
+    while (1) {
+        shm_fd = shm_open(SHM_NAME, O_RDWR, 0666);
+        if (shm_fd != -1) {
+            break; // success
+        }
+        if (errno == ENOENT) {
+            usleep(100000); // wait 100ms and retry
+            continue;
+        }
+        perror("shm_open"); // some other serious error
         exit(EXIT_FAILURE);
     }
 
