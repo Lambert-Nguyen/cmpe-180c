@@ -259,3 +259,21 @@ void consumer_socket() {
 
     close(client_fd);
 }
+
+int main(int argc, char *argv[]) {
+    parse_arguments(argc, argv);
+    if (use_shared_memory) {
+        if (is_producer) {
+            producer_shared();
+        } else {
+            consumer_shared();
+        }
+    } else {
+        if (is_producer) {
+            producer_socket();
+        } else {
+            consumer_socket();
+        }
+    }
+    return 0;
+}
